@@ -50,14 +50,16 @@
              (:store (query ?query-id (find-causal-path
                                        :target ?affected-xml
                                        :source ?source-xml)))
+                                       (:say "causal-path query?")
              (:dbug "Ask CausalityAgent if FIND-CAUSAL-PATH"
                     "for affected" ?affected ?target)
              (:subgoal (ask-bioagents ?query-id ?goal))
-             (:subgoal (retrieve-nl-explanation ?query-id ?goal ?reply-id ?affected-xml ?source-xml))))
+             (:subgoal (expand-query-result ?query-id ?goal ?reply-id ?affected-xml ?source-xml))))
 
 
+;; Give an NL explanation if there is one
  (kbop:method
-  :matches ((retrieve-nl-explanation ?query-id ?goal ?reply-id ?affected-xml ?source-xml))
+  :matches ((expand-query-result ?query-id ?goal ?reply-id ?affected-xml ?source-xml))
   :pre ((answer ?query-id ?ans)
         (paths ?ans ?paths))
   :on-ready (;; Get the NLG explanation.
@@ -69,26 +71,17 @@
              (:subgoal (report-answer ?query-id ?goal ?reply-id))))
 
 
+;;Or ask QCA
  (kbop:method
-  :matches ((retrieve-nl-explanation ?query-id ?goal ?reply-id ?affected-xml ?source-xml))
+  :matches ((expand-query-result ?query-id ?goal ?reply-id ?affected-xml ?source-xml))
   :pre ((answer ?query-id (list-fn failure no_path_found)))
   :on-ready (;; No path was found.
              (:say "CausalityAgent could not find a causal relationship. QCA is looking at other sources now.")
              (:dbug "CausalityAgent could not find a causal relationship.")
-             ;;(:subgoal (report-answer ?query-id ?goal ?reply-id))
-                (:subgoal (ask-qca  ?affected-xml ?source-xml ?goal ?reply-id ))))
+            ;; (:subgoal (report-answer ?query-id ?goal ?reply-id))
+               (:subgoal (ask-qca  ?affected-xml ?source-xml ?goal ?reply-id ))))
 
-
-(kbop:method
- :matches ((retrieve-nl-explanation ?query-id ?goal ?reply-id ?affected-xml ?source-xml))
- :pre ((answer ?query-id (list-fn failure)))
- :on-ready (;; No path was found.
-            (:say "no path found")
-            (:dbug "PCA could not find a path.")
-            ;;(:subgoal (report-answer ?query-id ?goal ?reply-id))
-            (:subgoal (ask-qca  ?affected-xml ?source-xml ?goal ?reply-id ))))
-            ;;(:subgoal (report-answer ?query-id ?goal ?reply-id))))
-
+;;QCA Methods
 
 (kbop:method
  :matches ((ask-qca ?affected-xml ?source-xml ?goal ?reply-id ))
@@ -99,10 +92,10 @@
             (:dbug "Ask QCA if FIND-QCA-PATH"
                    "for affected" ?affected ?target)
             (:subgoal (ask-bioagents ?query-id ?goal))
-            (:subgoal (retrieve-nl-explanation-qca ?query-id ?goal ?reply-id))))
+            (:subgoal (retrieve-nl-explanation ?query-id ?goal ?reply-id))))
 
 (kbop:method
- :matches ((retrieve-nl-explanation-qca ?query-id ?goal ?reply-id))
+ :matches ((retrieve-nl-explanation ?query-id ?goal ?reply-id))
  :pre ((answer ?query-id ?ans)
        (paths ?ans ?paths))
  :on-ready (;; Get the NLG explanation.
@@ -113,14 +106,14 @@
             (:subgoal (report-answer ?query-id ?goal ?reply-id))))
 
 (kbop:method
- :matches ((retrieve-nl-explanation-qca ?query-id ?goal ?reply-id))
+ :matches ((retrieve-nl-explanation ?query-id ?goal ?reply-id))
  :pre ((answer ?query-id (list-fn failure no_path_found)))
  :on-ready (;; No path was found.
             (:dbug "QCA could not find a path.")
             (:subgoal (report-answer ?query-id ?goal ?reply-id))))
 
 (kbop:method
- :matches ((retrieve-nl-explanation-qca ?query-id ?goal ?reply-id))
+ :matches ((retrieve-nl-explanation ?query-id ?goal ?reply-id))
  :pre ((answer ?query-id (list-fn failure)))
  :on-ready (;; No path was found.
             (:dbug "QCA could not find a path.")
